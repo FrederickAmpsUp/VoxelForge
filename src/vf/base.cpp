@@ -9,7 +9,7 @@ void setup_GL() {
     static bool glInitialized = false;
     if (!glInitialized) {
         if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-            throw std::runtime_error("Failed to initialize GLAD");
+            throw std::runtime_error("Failed to initialize GLAD. Ensure a GLFW context is active?");
         }
 
     }

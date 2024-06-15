@@ -3,10 +3,11 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <string>
+#include <vforge/gl/render.hpp>
 
 namespace VoxelForge::GL {
 
-class Window {
+class Window : public WritableScreen {
 public:
     Window(int width, int height, const std::string& title = "VoxelForge Window");
 

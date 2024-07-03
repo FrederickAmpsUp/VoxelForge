@@ -1,0 +1,3 @@
+[submodule "fglw"]
+	path = fglw
+	url = https://github.com/FrederickAmpsUp/fglw

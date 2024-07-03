@@ -10,14 +10,13 @@ include_directories(inc)
 # Gather all source files from src/ recursively
 file(GLOB_RECURSE SRC_FILES src/*.c src/*.cpp)
 
-add_subdirectory("fglw/")
-include_directories("fglw/inc/")
-
-# Create a static library from the gathered source files
 add_library(deps STATIC ${SRC_FILES})
-target_link_libraries(deps PRIVATE fglwDeps)
 
 file(GLOB LIB_FILES lib/*.a)
+
+add_subdirectory("fglw/")
+include_directories("fglw/inc/")
+target_link_libraries(deps PRIVATE fglwDeps)
 
 # Link each library with the deps target
 foreach(LIB_FILE ${LIB_FILES})

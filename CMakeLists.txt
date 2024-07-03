@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 project(VoxelForge)
 
 # Set C++ standard
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 
 # Include directory
 include_directories(inc)
@@ -10,13 +10,26 @@ include_directories(inc)
 # Gather all source files from src/ recursively
 file(GLOB_RECURSE SRC_FILES src/*.c src/*.cpp)
 
+add_subdirectory("fglw/")
+
 # Create a static library from the gathered source files
 add_library(deps STATIC ${SRC_FILES})
 
-target_link_libraries(deps glfw3)
+file(GLOB LIB_FILES lib/*.a)
+
+# Link each library with the deps target
+foreach(LIB_FILE ${LIB_FILES})
+    # Extract library name without path and extension
+    get_filename_component(LIB_NAME ${LIB_FILE} NAME_WE)
+    # Link the library with the deps target
+    target_link_libraries(deps :${LIB_NAME}.a)
+endforeach()
+
+link_directories(lib/)
 
 # Gather all source files from test/ (non-recursive)
 file(GLOB TEST_FILES test/*.c test/*.cpp)
+add_definitions(-DBX_CONFIG_DEBUG)
 
 # Create executables for each source file in test/
 foreach(TEST_FILE ${TEST_FILES})

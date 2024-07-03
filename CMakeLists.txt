@@ -11,9 +11,11 @@ include_directories(inc)
 file(GLOB_RECURSE SRC_FILES src/*.c src/*.cpp)
 
 add_subdirectory("fglw/")
+include_directories("fglw/inc/")
 
 # Create a static library from the gathered source files
 add_library(deps STATIC ${SRC_FILES})
+target_link_libraries(deps PRIVATE fglwDeps)
 
 file(GLOB LIB_FILES lib/*.a)
 

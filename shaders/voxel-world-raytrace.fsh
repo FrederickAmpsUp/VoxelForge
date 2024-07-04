@@ -20,6 +20,4 @@ void main() {
     bool filled = checkBitmask(originChunk, subtreeIndex);
 
     oFragColor = vec4(vec3(subtreeIndex)/4.0 * float(!filled), 1.0);
-    oFragColor = vec4(vec2(originChunk != uvec2(0)), 0.0, 1.0);
-    oFragColor = dbg;
 }

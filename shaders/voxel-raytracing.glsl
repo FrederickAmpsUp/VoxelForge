@@ -68,7 +68,7 @@ bool singleChunkMarch(uvec2 thcMask, inout vec3 ro_ts, vec3 rd) {
 
     vec3 ro_vs = ro_ts * 3.99 + 0.01;
 
-    for (int i = 0; i < 12; i++) {
+    for (int i = 0; i <= 12; i++) {
         if (checkBitmask(thcMask, uvec3(floor(ro_vs)))) {
             ro_ts = ro_vs / 4.0;
             return true;
@@ -92,7 +92,7 @@ bool worldMarch(inout vec3 ro_ms, vec3 rd) {
 
     vec3 t;
     float mint;
-    for (int i = 0; i < int(uWorldSize_chunks.x + uWorldSize_chunks.y + uWorldSize_chunks.z); i++) {
+    for (int i = 0; i <= int(uWorldSize_chunks.x + uWorldSize_chunks.y + uWorldSize_chunks.z); i++) {
         uvec2 chunk = readChunkBitmask(vec3(ro_vs));
 
         if (chunk != uvec2(0)) {
@@ -100,13 +100,13 @@ bool worldMarch(inout vec3 ro_ms, vec3 rd) {
 
             vec3 ro_sc_vs = ro_ts * 3.99 + 0.001;
 
-            for (int j = 0; j < 12; j++) {
+            for (int j = 0; j <= 12; j++) {
                 if (checkBitmask(chunk, uvec3(ro_sc_vs))) {
                     uvec2 subChunk = readSubChunkBitmask(floor(ro_vs) + ro_sc_vs/4.0);
                     
                     vec3 ro_ssc_vs = fract(ro_sc_vs);
                     bool hit_sc = singleChunkMarch(subChunk, ro_ssc_vs, rd);
-                        // this masterpiece of space conversion and offset combination
+                        // this masterpiece of space conversion
                     ro_ms = floor(ro_vs) + (ro_sc_vs + (ro_ssc_vs - fract(ro_sc_vs))) / 4.0;
 
                     if (hit_sc) return true;
@@ -115,7 +115,7 @@ bool worldMarch(inout vec3 ro_ms, vec3 rd) {
                 t = abs(fract(-sd * ro_sc_vs)/rd);
                 mint = min(t.x, min(t.y, t.z));
 
-                ro_sc_vs += rd * (mint+0.0005);
+                ro_sc_vs += rd * (mint+0.005);
 
                 if (!insideTHCTree(ivec3(floor(ro_sc_vs)))) break;
             }
@@ -123,7 +123,7 @@ bool worldMarch(inout vec3 ro_ms, vec3 rd) {
 
         t = abs(fract(-sd * ro_vs)/rd);
         mint = min(t.x, min(t.y, t.z));
-        ro_vs += rd * (mint+0.0005);
+        ro_vs += rd * (mint+0.005);
     }
     return false;
 }

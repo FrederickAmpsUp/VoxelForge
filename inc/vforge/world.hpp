@@ -31,6 +31,7 @@ public:
     void rebuild();
 
     void set(glm::uvec3 position, std::shared_ptr<voxelforge::VoxelData> vox);
+    void clear();
 
     virtual void draw(fglw::RenderTarget& fb, glm::mat4 view, glm::mat4 proj) override;
 

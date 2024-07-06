@@ -56,6 +56,8 @@ VoxelWorld::VoxelWorld(unsigned int dX, unsigned int dY, unsigned int dZ) : chun
     this->voxelRTShader.uniform("uChunkData", this->chunkData);
     this->voxelRTShader.uniform("uSubChunkData", this->subChunkData);
 
+    this->voxelRTShader.uniform("uWorldSize_chunks", this->dim);
+
     this->ready = false;
 }
 VoxelWorld::VoxelWorld(glm::uvec3 dim) : VoxelWorld(dim.x, dim.y, dim.z) { }
@@ -64,7 +66,7 @@ void VoxelWorld::rebuild() {
     if (this->ready) return;
     this->ready = true;
 
-    std::vector<uint64_t> chunkDataBuf(this->dim.x * this->dim.y * this->dim.z, -1);
+    std::vector<uint64_t> chunkDataBuf(this->dim.x * this->dim.y * this->dim.z, 0);
     std::vector<uint64_t> subChunkDataBuf(this->dim.x * this->dim.y * this->dim.z * 4 * 4 * 4, 0);
 
     for (const auto& [position, chunk] : this->chunks) {
@@ -73,8 +75,6 @@ void VoxelWorld::rebuild() {
         if (chunk) { // should always be true, but be safe!
             chunkDataBuf[offset] = chunk->getBitmask();
 
-            FGLW_DEBUG_PRINTF("chunkBitmask: %lu, offset: %u\n", chunk->getBitmask(), offset);
-
             for (size_t i = 0; i < 4; ++i)
             for (size_t j = 0; j < 4; ++j)
             for (size_t k = 0; k < 4; ++k) {
@@ -82,7 +82,6 @@ void VoxelWorld::rebuild() {
                 if (!subChunk) continue;
 
                 glm::uvec3 scPosition = position * 4u + glm::uvec3(i, j, k);
-                FGLW_DEBUG_PRINTF("scPosition: %u %u %u\n", scPosition.x, scPosition.y, scPosition.z);
                 size_t scOffset = scPosition.x + scPosition.y*this->dim.x*4u + scPosition.z*this->dim.x*this->dim.y*4u*4u;
 
                 subChunkDataBuf[scOffset] = subChunk->getBitmask();
@@ -91,9 +90,8 @@ void VoxelWorld::rebuild() {
         }
     }
 
-    FGLW_DEBUG_PRINTF("%lu\n", chunkDataBuf[0]);
     this->chunkData.upload(chunkDataBuf.data());
-    //this->subChunkData.upload(subChunkDataBuf.data());
+    this->subChunkData.upload(subChunkDataBuf.data());
 }
 
 void VoxelWorld::draw(fglw::RenderTarget& fb, glm::mat4 view, glm::mat4 proj) {
@@ -109,8 +107,13 @@ void VoxelWorld::set(glm::uvec3 position, std::shared_ptr<voxelforge::VoxelData>
 
     if (!chunk) chunk = std::make_shared<voxelforge::VoxelChunk>();
 
-    chunk->set(position, vox);
+    chunk->set(position % 16u, vox);
 
+    this->ready = false;
+}
+
+void VoxelWorld::clear() {
+    this->chunks.clear();
     this->ready = false;
 }
 }

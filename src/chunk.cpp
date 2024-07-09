@@ -19,6 +19,11 @@ void VoxelSubChunk::set(unsigned int x, unsigned int y, unsigned int z, std::sha
     this->bitmask |= voxelBit; // set the bit in the bitmask, indicating that there's a voxel here
 }
 
+std::shared_ptr<VoxelData> VoxelSubChunk::get(unsigned int x, unsigned int y, unsigned int z) {
+    if (x > 3 || y > 3 || z > 3) return std::shared_ptr<VoxelData>(nullptr);
+    return this->data[x][y][z];
+}
+
 void VoxelSubChunk::clear(unsigned int x, unsigned int y, unsigned int z) {
     if (x > 3 || y > 3 || z > 3) return; // voxel out of bounds
     this->data[x][y][z].reset();

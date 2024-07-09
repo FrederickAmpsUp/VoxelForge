@@ -1,6 +1,10 @@
 #include <vforge/world.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+static uint32_t floatBitsToUint(float x) {
+    return *(uint32_t *)&x;
+}
+
 namespace voxelforge {
 
 VoxelWorld::VoxelWorld(unsigned int dX, unsigned int dY, unsigned int dZ) : chunks({}) {
@@ -55,6 +59,7 @@ VoxelWorld::VoxelWorld(unsigned int dX, unsigned int dY, unsigned int dZ) : chun
 
     this->voxelRTShader.uniform("uChunkData", this->chunkData);
     this->voxelRTShader.uniform("uSubChunkData", this->subChunkData);
+    this->voxelRTShader.uniform("uVoxelData", this->voxelData);
 
     this->voxelRTShader.uniform("uWorldSize_chunks", this->dim);
 
@@ -68,6 +73,7 @@ void VoxelWorld::rebuild() {
 
     std::vector<uint64_t> chunkDataBuf(this->dim.x * this->dim.y * this->dim.z, 0);
     std::vector<uint64_t> subChunkDataBuf(this->dim.x * this->dim.y * this->dim.z * 4 * 4 * 4, 0);
+    std::vector<uint32_t> voxelDataBuf((unsigned long long)this->dim.x * (unsigned long long)this->dim.y * (unsigned long long)this->dim.z * 16ull * 16ull * 16ull * 4ull, 0);
 
     for (const auto& [position, chunk] : this->chunks) {
         size_t offset = position.x + position.y*this->dim.x + position.z*this->dim.x*this->dim.y;
@@ -85,6 +91,21 @@ void VoxelWorld::rebuild() {
                 size_t scOffset = scPosition.x + scPosition.y*this->dim.x*4u + scPosition.z*this->dim.x*this->dim.y*4u*4u;
 
                 subChunkDataBuf[scOffset] = subChunk->getBitmask();
+
+                for (size_t i2 = 0; i2 < 4; ++i2)
+                for (size_t j2 = 0; j2 < 4; ++j2)
+                for (size_t k2 = 0; k2 < 4; ++k2) {
+                    const auto& voxel = subChunk->get(i2, j2, k2);
+                    if (!voxel) continue;
+
+                    glm::uvec3 voxelPosition = scPosition * 4u + glm::uvec3(i2, j2, k2);
+                    size_t voxelOffset = voxelPosition.x + voxelPosition.y*this->dim.x*16u + voxelPosition.z*this->dim.x*this->dim.y*16u*16u * 4u;
+
+                    voxelDataBuf[voxelOffset+0] = floatBitsToUint(voxel->normal.x);
+                    voxelDataBuf[voxelOffset+1] = floatBitsToUint(voxel->normal.y);
+                    voxelDataBuf[voxelOffset+2] = floatBitsToUint(voxel->normal.z);
+                    voxelDataBuf[voxelOffset+3] = voxel->matID;
+                }
             }
             
         }
@@ -92,6 +113,7 @@ void VoxelWorld::rebuild() {
 
     this->chunkData.upload(chunkDataBuf.data());
     this->subChunkData.upload(subChunkDataBuf.data());
+    this->voxelData.upload(voxelDataBuf.data());
 }
 
 void VoxelWorld::draw(fglw::RenderTarget& fb, glm::mat4 view, glm::mat4 proj) {

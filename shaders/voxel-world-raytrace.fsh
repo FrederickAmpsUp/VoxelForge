@@ -2,6 +2,7 @@
 
 uniform usampler3D uChunkData;
 uniform usampler3D uSubChunkData;
+uniform usampler3D uVoxelData;
 uniform mat4 uViewMatrix;
 
 uniform uvec3 uWorldSize_chunks;
@@ -20,8 +21,7 @@ void main() {
 
     if (!hit) discard;
 
-    vec3 green1 = vec3(0.1, 1.0, 0.1);
-    vec3 green2 = vec3(0.0, 1.0, 0.3);
+    VoxelData vox = readVoxelData(ro);
 
-    oFragColor = vec4(mix(green1, green2, ro.y) * ro.y, 1.0);
+    oFragColor = vec4(vec3(ro) / vec3(uWorldSize_chunks), 1.0);
 }

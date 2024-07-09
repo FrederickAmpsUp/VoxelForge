@@ -35,6 +35,8 @@ public:
 
     virtual void draw(fglw::RenderTarget& fb, glm::mat4 view, glm::mat4 proj) override;
 
+    glm::uvec3 size() const { return this->dim; }
+
 protected:
     struct VertexLayout {
         glm::vec3 aPosition;

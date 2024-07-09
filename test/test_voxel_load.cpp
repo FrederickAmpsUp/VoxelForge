@@ -3,20 +3,30 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/noise.hpp>
+#include <vox_file/vox_file.h>
 
 class SimpleVoxelRaytraceApp : public fglw::App {
 public:
     FGLW_ENABLE_APP;
 
     virtual void setup(std::vector<const char *> args) override {
-        this->world.clear();
-        auto vd = std::make_shared<voxelforge::VoxelData>(glm::vec3(1.0, 0.0, 0.0), 0);
-        for (int x = 0; x < 16 * 64; x++) {
-            for (int y = 0; y < 16 * 64; y++) {
-                float height = 12.0 * (0.5 + 0.5 * glm::perlin(glm::vec3(x,y, this->win.run_time() * 8.0f) / 16.0f));
-                for (int i = 0; i < height; i++) {
-                    this->world.set(glm::uvec3(x, i, y), vd);
-                }
+        magicavoxel::VoxFile file(false, true, false);
+        file.Load("models/Ak74.vox");
+
+        glm::uvec3 largestSize = glm::uvec3(0);
+
+        for (const auto& sparseModel : file.sparseModels()) {
+            auto sizeVoxels = sparseModel.size();
+            largestSize = glm::max(largestSize, glm::uvec3(sizeVoxels.x / 16 + 1, sizeVoxels.z / 16 + 1, sizeVoxels.y / 16 + 1));
+        }
+
+        this->world = std::make_unique<voxelforge::VoxelWorld>(largestSize);
+        this->world->clear();
+
+        for (const auto& sparseModel : file.sparseModels()) {
+            for (const auto& vox : sparseModel.voxels()) {
+                auto voxD = std::make_shared<voxelforge::VoxelData>(glm::vec3(1.0), vox.color);
+                this->world->set(glm::uvec3(vox.x, vox.z, vox.y), voxD);
             }
         }
     }
@@ -30,13 +40,13 @@ public:
         }
         ++frameCount;
 
-        glm::vec3 center = glm::vec3(32, 0, 32);
+        glm::vec3 center = glm::vec3(this->world->size().x / 2, this->world->size().y / 2, this->world->size().z / 2);
 
-        glm::mat4 view = glm::lookAt(center + glm::vec3(2.0f*cos(0.25 * this->win.run_time()), 4.0f, -2.0f*sin(0.25 * this->win.run_time())) * 2.0f, center, glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 view = glm::lookAt(center + glm::vec3(2.0f*cos(0.25 * this->win.run_time()), 2.0f, -2.0f*sin(0.25 * this->win.run_time())) * 2.0f, center, glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)this->win.width() / (float)this->win.height(), 0.1f, 100.0f);
 
         this->win.clear(glm::vec3(0.5f, 0.5f, 0.5f));
-        this->world.draw(this->win, view, projection);
+        this->world->draw(this->win, view, projection);
 
         float frameEnd = this->win.run_time();
         float dt = frameEnd - frameStart;
@@ -54,12 +64,12 @@ public:
 
     }
 protected:
-    voxelforge::VoxelWorld world = voxelforge::VoxelWorld(glm::uvec3(64, 1, 64));
+    std::unique_ptr<voxelforge::VoxelWorld> world;
     unsigned long long frameCount = 0;
 };
 
 FGLW_DEFINE_APP(
     SimpleVoxelRaytraceApp,
-    "Voxel Raytracing test",
+    "Voxel Model Load test",
     1920, 1080
 )

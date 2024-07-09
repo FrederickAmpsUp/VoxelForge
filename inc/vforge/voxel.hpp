@@ -4,10 +4,10 @@
 
 namespace voxelforge {
 
-    // can add more stuff here if needed
 struct VoxelData {
-    VoxelData(glm::vec3 col) : color(col) {}
+    VoxelData(glm::vec3 norm, uint32_t mat) : normal(norm), matID(mat) {}
 
-    glm::vec3 color;
+    glm::vec3 normal;
+    uint32_t matID;
 };
 }

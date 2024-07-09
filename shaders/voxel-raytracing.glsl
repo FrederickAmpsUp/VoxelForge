@@ -7,11 +7,25 @@
  * X_vs: Voxel Space, same as tree space but 1 unit = 1 voxel
 */
 
+struct VoxelData {
+    vec3 normal;
+    int matID;
+};
+
 uvec2 readChunkBitmask(vec3 loc_ws) {
     return texelFetch(uChunkData, ivec3(floor(loc_ws)), 0).rg;
 }
 uvec2 readSubChunkBitmask(vec3 loc_ws) {
     return texelFetch(uSubChunkData, ivec3(floor(loc_ws*4.0)), 0).rg;
+}
+VoxelData readVoxelData(vec3 loc_ws) {
+    uvec4 texelData = texelFetch(uVoxelData, ivec3(0), 0);
+
+    VoxelData data;
+    data.normal = uintBitsToFloat(texelData.xyz);
+    data.matID = int(texelData.a);
+
+    return data;
 }
 
 bool insideTHCTree(vec3 loc_ts) {

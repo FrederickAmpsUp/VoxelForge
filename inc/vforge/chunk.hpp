@@ -12,9 +12,11 @@ public:
     VoxelSubChunk();
 
     void set(unsigned int x, unsigned int y, unsigned int z, std::shared_ptr<VoxelData> data);
+    std::shared_ptr<VoxelData> get(unsigned int x, unsigned int y, unsigned int z);
     void clear(unsigned int x, unsigned int y, unsigned int z);
 
     void set(glm::uvec3 position, std::shared_ptr<VoxelData> data) { this->set(position.x, position.y, position.z, data); }
+    std::shared_ptr<VoxelData> get(glm::uvec3 position) { return this->get(position.x, position.y, position.z); }
     void clear(glm::uvec3 position) { this->clear(position.x, position.y, position.z); }
 
     void clear();

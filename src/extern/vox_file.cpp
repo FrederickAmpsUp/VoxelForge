@@ -188,7 +188,7 @@ void VoxFile::ReadXyziChunk(std::ifstream& file, uint32_t contents_size,
 
 void VoxFile::ReadRgbaChunk(std::ifstream& file, uint32_t contents_size,
                             uint32_t children_size) {
-  for (int i = 1; i < 256; ++i) {
+  for (int i = 0; i < 256; ++i) {
     palette_[i].r = read_byte(file);
     palette_[i].g = read_byte(file);
     palette_[i].b = read_byte(file);

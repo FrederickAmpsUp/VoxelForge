@@ -1,7 +1,7 @@
 # line stats
 
 include="./inc/vforge"
-source="./src/ ./test/ ./run/"
+source="./src/vforge ./test/ ./run/"
 
 head_data=$(find $include -name "*.hpp" -type f -exec wc -l {} +)
 source_data=$(find $source -name "*.cpp" -type f -exec wc -l {} +)

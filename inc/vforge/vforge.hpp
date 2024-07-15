@@ -1,3 +1,6 @@
 #include "chunk.hpp"
 #include "voxel.hpp"
+#include "object.hpp"
 #include "world.hpp"
+#include "worldobject.hpp"
+#include "vox_file.hpp"

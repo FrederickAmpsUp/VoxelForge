@@ -10,11 +10,14 @@ public:
 
     virtual void setup(std::vector<const char *> args) override {
         this->world.clear();
-        auto vd = std::make_shared<voxelforge::VoxelData>(glm::vec3(1.0, 0.0, 0.0), 0);
+
+        this->world.setMaterial(0, glm::vec4(0.2f, 1.0f, 0.2f, 1.0f));
+        this->world.setMaterial(1, glm::vec4(0.0f, 0.8f, 0.0f, 1.0f));
         for (int x = 0; x < 16 * 64; x++) {
             for (int y = 0; y < 16 * 64; y++) {
                 float height = 12.0 * (0.5 + 0.5 * glm::perlin(glm::vec3(x,y, this->win.run_time() * 8.0f) / 16.0f));
                 for (int i = 0; i < height; i++) {
+                    auto vd = std::make_shared<voxelforge::VoxelData>(glm::vec3(1.0, 0.0, 0.0), height > 6);
                     this->world.set(glm::uvec3(x, i, y), vd);
                 }
             }
@@ -32,7 +35,7 @@ public:
 
         glm::vec3 center = glm::vec3(32, 0, 32);
 
-        glm::mat4 view = glm::lookAt(center + glm::vec3(2.0f*cos(0.25 * this->win.run_time()), 4.0f, -2.0f*sin(0.25 * this->win.run_time())) * 2.0f, center, glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::mat4 view = glm::lookAt(center + glm::vec3(2.0f*cos(0.25 * this->win.run_time()), 1.5f, -2.0f*sin(0.25 * this->win.run_time())) * 2.0f, center, glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)this->win.width() / (float)this->win.height(), 0.1f, 100.0f);
 
         this->win.clear(glm::vec3(0.5f, 0.5f, 0.5f));
@@ -54,7 +57,7 @@ public:
 
     }
 protected:
-    voxelforge::VoxelWorld world = voxelforge::VoxelWorld(glm::uvec3(64, 1, 64));
+    voxelforge::VoxelObject world = voxelforge::VoxelObject(glm::uvec3(64, 1, 64));
     unsigned long long frameCount = 0;
 };
 

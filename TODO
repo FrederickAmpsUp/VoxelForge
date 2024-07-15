@@ -1,0 +1,3 @@
+* Stop using FGLW, use FGLA in the future
+* Proper voxel model loading
+* Distance Field generation with the Euclidian distance transform and a compute shader

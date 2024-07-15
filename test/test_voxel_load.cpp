@@ -10,9 +10,8 @@ public:
     FGLW_ENABLE_APP;
 
     virtual void setup(std::vector<const char *> args) override {
-        magicavoxel::VoxFile file(false, true, false);
-        file.Load("models/Ak74.vox");
-
+        //file.Load("models/tiger1.vox");
+/*
         glm::uvec3 largestSize = glm::uvec3(0);
 
         for (const auto& sparseModel : file.sparseModels()) {
@@ -20,29 +19,45 @@ public:
             largestSize = glm::max(largestSize, glm::uvec3(sizeVoxels.x / 16 + 1, sizeVoxels.z / 16 + 1, sizeVoxels.y / 16 + 1));
         }
 
-        this->world = std::make_unique<voxelforge::VoxelWorld>(largestSize);
+        FGLW_DEBUG_PRINTF("size: %u %u %u\n", largestSize.x, largestSize.y, largestSize.z);
+
+        this->world = std::make_unique<voxelforge::VoxelObject>(largestSize);
         this->world->clear();
+        
+        uint64_t voxCount = 0;
 
         for (const auto& sparseModel : file.sparseModels()) {
             for (const auto& vox : sparseModel.voxels()) {
                 auto voxD = std::make_shared<voxelforge::VoxelData>(glm::vec3(1.0), vox.color);
                 this->world->set(glm::uvec3(vox.x, vox.z, vox.y), voxD);
+                voxCount++;
+            }
+
+            magicavoxel::Palette p = sparseModel.palette();
+            for (int i = 0; i < 256; i++) {
+                auto color = p[i];
+                glm::vec4 cD = glm::vec4(color.r, color.g, color.b, color.a) / 256.0f;
+                this->world->setMaterial(i, cD);
             }
         }
+
+        std::cout << voxCount << " voxels" << std::endl;*/
+        voxelforge::files::MagicaVoxelVOX file("models/tiger1.vox");
+        this->world = file.getWorld();
     }
     
     virtual void update() override {
         static float frameStart = 0;
-        
+
         GLenum err = glGetError();
         if (err != GL_NO_ERROR) {
             FGLW_DEBUG_PRINTF("GL error: %s\n", gluErrorString(err));
         }
         ++frameCount;
 
-        glm::vec3 center = glm::vec3(this->world->size().x / 2, this->world->size().y / 2, this->world->size().z / 2);
-
-        glm::mat4 view = glm::lookAt(center + glm::vec3(2.0f*cos(0.25 * this->win.run_time()), 2.0f, -2.0f*sin(0.25 * this->win.run_time())) * 2.0f, center, glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::vec3 center = glm::vec3(0, 4, 0);
+        float r = 3.0f;
+        glm::mat4 view = glm::lookAt(center + glm::vec3(r*cos(0.25 * this->win.run_time()), r, r*sin(0.25 * this->win.run_time())) * 2.0f, center, glm::vec3(0.0f, 1.0f, 0.0f));
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)this->win.width() / (float)this->win.height(), 0.1f, 100.0f);
 
         this->win.clear(glm::vec3(0.5f, 0.5f, 0.5f));
@@ -64,7 +79,8 @@ public:
 
     }
 protected:
-    std::unique_ptr<voxelforge::VoxelWorld> world;
+    std::shared_ptr<voxelforge::VoxelWorld> world;
+    //magicavoxel::VoxFile file = magicavoxel::VoxFile(false, true, true);
     unsigned long long frameCount = 0;
 };
 

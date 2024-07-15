@@ -19,7 +19,7 @@ uvec2 readSubChunkBitmask(vec3 loc_ws) {
     return texelFetch(uSubChunkData, ivec3(floor(loc_ws*4.0)), 0).rg;
 }
 VoxelData readVoxelData(vec3 loc_ws) {
-    uvec4 texelData = texelFetch(uVoxelData, ivec3(0), 0);
+    uvec4 texelData = texelFetch(uVoxelData, ivec3(floor(loc_ws*16.0)), 0);
 
     VoxelData data;
     data.normal = uintBitsToFloat(texelData.xyz);

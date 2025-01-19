@@ -5,12 +5,18 @@
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <result/result.hpp>
+#include <unordered_set>
+#include <cstring>
 
 class TestApplication {
 public:
 	cpp::result<void, vforge::Error> run() {
 		glfwInit();
 		this->window = glfwCreateWindow(800, 600, "Voxelforge Test Window", NULL, NULL);
+	
+		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
 		if (!this->window) {
 			return cpp::fail(vforge::Error{"Failed to create window."});
 		}
@@ -37,8 +43,43 @@ public:
 		inst_info.enabledExtensionCount = extensions.size();
 		inst_info.ppEnabledExtensionNames = extensions.data();
 
-		// TODO: validation layers
-		
+#ifdef NDEBUG
+		const std::vector<const char *> layers = {
+		};
+#else
+		std::unordered_set<const char *> layers = {
+			"VK_LAYER_KHRONOS_validation",
+			"validate deez nuts"
+		};
+
+		unsigned int n_supported_layers = 0;
+		vkEnumerateInstanceLayerProperties(&n_supported_layers, nullptr);
+
+		const std::vector<VkLayerProperties> supported_layers(n_supported_layers);
+		vkEnumerateInstanceLayerProperties(&n_supported_layers, (VkLayerProperties*)supported_layers.data());
+
+		for (const char *layer_name : layers) {
+			bool failed = true;
+			for (const auto& layer : supported_layers) {
+				if (strcmp(layer_name, layer.layerName) == 0) {
+					failed = false;
+					break;
+				}
+			}
+
+			if (failed) {
+				spdlog::warn("Validation layer \"{}\" requested but not supported!", layer_name);
+				layers.erase(layer_name);
+				break;
+			}
+		}
+#endif
+
+		std::vector<const char *> layer_vec(layers.begin(), layers.end());
+
+		inst_info.enabledLayerCount = layer_vec.size();
+		inst_info.ppEnabledLayerNames = layer_vec.data();
+
 		if (vkCreateInstance(&inst_info, nullptr, &this->instance)) {
 			return cpp::fail(vforge::Error{"Failed to create Vulkan instance."});
 		}

@@ -4,7 +4,7 @@
 #include <optional>
 #include <string>
 
-namespace vforge {
+namespace vf {
 
 struct Error {
 	std::string message;

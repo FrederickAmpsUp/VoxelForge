@@ -8,6 +8,6 @@ const std::vector<const char *>& vf::get_required_instance_extensions() {
 	return instance_extensions;
 }
 
-i64 score_device(VkPhysicalDevice& dev) {
+i64 vf::score_device(VkPhysicalDevice& dev) {
 	return 1; // no requirements atm
 }

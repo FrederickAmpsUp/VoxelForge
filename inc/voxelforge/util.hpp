@@ -38,13 +38,27 @@ struct QueueFamilyIndices {
 	*/
 	static QueueFamilyIndices find(const VkPhysicalDevice& device);
 };
+
+/**
+* Combines 2 `VkPhysicalDeviceFeatures`.
+* @param a A `VkPhysicalDeviceFeatures`
+* @param b A `VkPhysicalDeviceFeatures`
+* @return A `VkPhysicalDeviceFeatures` with all features required by either `a` or `b`
+*/
+VkPhysicalDeviceFeatures combine_physical_device_features(const VkPhysicalDeviceFeatures& a, const VkPhysicalDeviceFeatures& b);
 }
 
 /**
-* Get a list of Vulkan instance extensions VoxelForge requires.
-* @returns A `std::vector` of extension names required by Voxelforge
+* Get a list of Vulkan instance extensions Voxelforge requires.
+* @return A `std::vector` of extension names required by Voxelforge
 */
 const std::vector<const char *>& get_required_instance_extensions();
+
+/**
+* Get a list of Vulkan physical device features Voxelforge requires.
+* @return A `VkPhysicalDeviceFeatures` representing features required by Voxelforge
+*/
+const VkPhysicalDeviceFeatures& get_required_physical_device_features();
 
 /**
 * Score a `VkPhysicalDevice` based on expected performance for Voxelforge.

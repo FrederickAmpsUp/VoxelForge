@@ -48,7 +48,7 @@ QueueFamilyIndices QueueFamilyIndices::find(const VkPhysicalDevice& dev) {
 	std::vector<VkQueueFamilyProperties> queue_families(n_queue_families);
 	vkGetPhysicalDeviceQueueFamilyProperties(dev, &n_queue_families, queue_families.data());
 
-	i32 i = 0;
+	u32 i = 0;
 
 	for (const auto& queue_family : queue_families) {
 		if (queue_family.queueFlags & VK_QUEUE_GRAPHICS_BIT) {

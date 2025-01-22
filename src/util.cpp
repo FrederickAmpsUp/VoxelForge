@@ -3,10 +3,14 @@
 namespace vf {
 static const std::vector<const char *> instance_extensions = {
 
-}; // nothing here!
+};
+
+static const std::vector<const char *> device_extensions = {
+
+};
 
 const VkPhysicalDeviceFeatures& get_required_physical_device_features() {
-	static VkPhysicalDeviceFeatures features{};
+	static VkPhysicalDeviceFeatures features = {};
 
 	// we don't actually require any features ... yet!
 
@@ -15,6 +19,10 @@ const VkPhysicalDeviceFeatures& get_required_physical_device_features() {
 
 const std::vector<const char *>& get_required_instance_extensions() {
 	return instance_extensions;
+}
+
+const std::vector<const char *>& get_required_device_extensions() {
+	return device_extensions;
 }
 
 i64 score_device(const VkPhysicalDevice& dev) {

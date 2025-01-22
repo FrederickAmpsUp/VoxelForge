@@ -50,9 +50,15 @@ VkPhysicalDeviceFeatures combine_physical_device_features(const VkPhysicalDevice
 
 /**
 * Get a list of Vulkan instance extensions Voxelforge requires.
-* @return A `std::vector` of extension names required by Voxelforge
+* @return A `std::vector` of instance extension names required by Voxelforge
 */
 const std::vector<const char *>& get_required_instance_extensions();
+
+/**
+* Get a list of Vulkan device extensions Voxelforge requires.
+* @return A `std::vector` of device extension names required by Voxelforge
+*/
+const std::vector<const char *>& get_required_device_extensions();
 
 /**
 * Get a list of Vulkan physical device features Voxelforge requires.

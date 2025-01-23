@@ -1,6 +1,6 @@
+#include <voxelforge/voxelforge.hpp>
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include <voxelforge/voxelforge.hpp>
 #include <iostream>
 #include <spdlog/spdlog.h>
 #include <result/result.hpp>
@@ -16,7 +16,13 @@
 class TestApplication {
 public:
 	cpp::result<void, vf::Error> create_window() {
-		glfwInit();
+		if (!glfwInit()) {
+			return cpp::fail(vf::Error{"Failed to initialize GLFW."});
+		}
+
+		if (!glfwVulkanSupported()) {
+			return cpp::fail(vf::Error{"GLFW does not support Vulkan."});
+		}
 
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
@@ -43,22 +49,25 @@ public:
 		inst_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		inst_info.pApplicationInfo = &app_info;
 
-		u32 glfw_ext_count = 0;		
+		this->instance_extensions = std::vector<const char *>();
+
+		u32 n_glfw_exts = 0;
 		const char **glfw_exts;
 
-		glfw_exts = glfwGetRequiredInstanceExtensions(&glfw_ext_count);
-
-		std::vector<const char *> extensions(glfw_exts, glfw_exts + glfw_ext_count);
+		glfw_exts = glfwGetRequiredInstanceExtensions(&n_glfw_exts);
+		spdlog::info("GLFW requiring {} instance extensions.", n_glfw_exts);
+		if (glfw_exts && n_glfw_exts != 0) this->instance_extensions.insert(this->instance_extensions.end(), glfw_exts, glfw_exts + n_glfw_exts);
+		
 		const auto& vf_extensions = vf::get_required_instance_extensions();
-		extensions.insert(extensions.end(), vf_extensions.begin(), vf_extensions.end());
+		this->instance_extensions.insert(this->instance_extensions.end(), vf_extensions.begin(), vf_extensions.end());
 
-		spdlog::info("Using {} extensions:", extensions.size());
-		for (const char *ext : extensions) {
+		spdlog::info("Using {} instance extensions:", this->instance_extensions.size());
+		for (const char *ext : this->instance_extensions) {
 			spdlog::info("\t{}", ext);
 		}
 
-		inst_info.enabledExtensionCount = extensions.size();
-		inst_info.ppEnabledExtensionNames = extensions.data();
+		inst_info.enabledExtensionCount = this->instance_extensions.size();
+		inst_info.ppEnabledExtensionNames = this->instance_extensions.data();
 
 #ifdef NDEBUG
 		const std::vector<const char *> layers = {
@@ -91,15 +100,15 @@ public:
 		}
 #endif
 
-		std::vector<const char *> layer_vec(layers.begin(), layers.end());
+		this->validation_layers = std::vector<const char *>(layers.begin(), layers.end());
 
-		spdlog::info("Using {} validation layers:", layer_vec.size());
-		for (const char *layer : layer_vec) {
+		spdlog::info("Using {} validation layers:", this->validation_layers.size());
+		for (const char *layer : this->validation_layers) {
 			spdlog::info("\t{}", layer);
 		}
 
-		inst_info.enabledLayerCount = layer_vec.size();
-		inst_info.ppEnabledLayerNames = layer_vec.data();
+		inst_info.enabledLayerCount = this->validation_layers.size();
+		inst_info.ppEnabledLayerNames = this->validation_layers.data();
 
 		if (vkCreateInstance(&inst_info, nullptr, &this->instance) != VK_SUCCESS) {
 			return cpp::fail(vf::Error{"Failed to create Vulkan instance."});
@@ -140,13 +149,38 @@ public:
 		return std::nullopt;
 	}
 
-	static i64 score_device(const VkPhysicalDevice& dev, const VkSurfaceKHR& window_surface) {
+	i64 score_device(const VkPhysicalDevice& dev, const VkSurfaceKHR& window_surface) {
 		i64 vf_score = vf::score_device(dev);
 
 		if (vf_score < 0) return vf_score; // if VoxelForge doesn't support the GPU, we don't either
 
 		if (!find_present_family(dev, window_surface).has_value()) return -1; // we need a GPU with present support for this app
+		
+		u32 n_exts = 0;
+		vkEnumerateDeviceExtensionProperties(dev, nullptr, &n_exts, nullptr);
 
+		std::vector<VkExtensionProperties> exts(n_exts);
+		vkEnumerateDeviceExtensionProperties(dev, nullptr, &n_exts, exts.data());
+
+		bool all_exts_found = true;
+		for (const char *required_ext : this->device_extensions) {
+			bool ext_found = false;
+
+			for (const auto& ext : exts) {
+				if (strcmp(ext.extensionName, required_ext) == 0) {
+					ext_found = true;
+					break;
+				}
+			}
+
+			if (!ext_found) {
+				all_exts_found = false;
+				break;
+			}
+		}
+
+		if (!all_exts_found) return -1; // device is unsuitable if it doesn't support the required extensions
+	
 		return 1; // no scoring yet...
 	}
 
@@ -160,6 +194,14 @@ public:
 
 		std::vector<VkPhysicalDevice> devices(n_devices);
 		vkEnumeratePhysicalDevices(this->instance, &n_devices, devices.data());
+
+		this->device_extensions = std::vector<const char *>();
+
+		this->device_extensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+		this->device_extensions.emplace_back("extend deez nuts");
+
+		const auto& vf_extensions = vf::get_required_device_extensions();
+		this->device_extensions.insert(this->device_extensions.end(), vf_extensions.begin(), vf_extensions.end());
 
 		std::sort(devices.begin(), devices.end(), [this](VkPhysicalDevice& a, VkPhysicalDevice& b) {
 			return score_device(a, this->window_surface) > score_device(b, this->window_surface);
@@ -210,8 +252,17 @@ public:
 
 		device_info.pEnabledFeatures = &device_features;
 
-		device_info.enabledExtensionCount = 0; //TODO
-		
+		spdlog::info("Using {} device extensions:", this->device_extensions.size());
+		for (const char *ext : this->device_extensions) {
+			spdlog::info("\t{}", ext);
+		}
+
+		device_info.enabledExtensionCount = this->device_extensions.size();
+		device_info.ppEnabledExtensionNames = this->device_extensions.data();
+
+		device_info.enabledLayerCount = this->validation_layers.size();
+		device_info.ppEnabledLayerNames = this->validation_layers.data();
+
 		if (vkCreateDevice(this->physical_device, &device_info, nullptr, &this->device) != VK_SUCCESS) {
 			return cpp::fail(vf::Error{"Failed to create Vulkan device."});
 		}
@@ -261,6 +312,10 @@ public:
 		glfwDestroyWindow(this->window);
 		glfwTerminate();
 	}
+
+	std::vector<const char *> instance_extensions;
+	std::vector<const char *> device_extensions;
+	std::vector<const char *> validation_layers;
 
 	GLFWwindow *window;
 

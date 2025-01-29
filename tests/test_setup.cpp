@@ -436,9 +436,36 @@ public:
 		u32 n_swc_images = 0;
 		vkGetSwapchainImagesKHR(this->device, this->swapchain, &n_swc_images, nullptr);
 		this->swapchain_images.resize(n_swc_images);
+		this->swapchain_image_views.resize(n_swc_images);
 		vkGetSwapchainImagesKHR(this->device, this->swapchain, &n_swc_images, this->swapchain_images.data());
 
 		spdlog::info("Retrieved {} swapchain images.", n_swc_images);
+
+		for (u32 i = 0; i < n_swc_images; ++i) {
+			VkImageViewCreateInfo view_info = {};
+			view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			view_info.image = this->swapchain_images[i];
+			
+			view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			view_info.format = this->swapchain_format;
+
+			view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+			view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+			view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+			view_info.components.a = VK_COMPONENT_SWIZZLE_ONE;
+
+			view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			view_info.subresourceRange.baseMipLevel = 0;
+			view_info.subresourceRange.levelCount = 1;
+			view_info.subresourceRange.baseArrayLayer = 0;
+			view_info.subresourceRange.layerCount = 1;
+
+			if (vkCreateImageView(this->device, &view_info, nullptr, &this->swapchain_image_views[i]) != VK_SUCCESS) {
+				return cpp::fail(vf::Error{"Failed to create swapchain image view."});
+			}
+		}
+
+		spdlog::info("Retrieved swapchain image views.");
 
 		return {};
 	}
@@ -488,6 +515,7 @@ public:
 	VkFormat swapchain_format;
 	VkExtent2D swapchain_extent;
 	std::vector<VkImage> swapchain_images;
+	std::vector<VkImageView> swapchain_image_views;
 
 	VkInstance instance;
 
